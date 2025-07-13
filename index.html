@@ -92,13 +92,17 @@
             const color = topic.tags?.includes('Who?') ? 'bg-yellow-400' :
                           topic.tags?.includes('Where?') ? 'bg-green-400' : 
                           topic.tags?.includes('What?') ? 'bg-blue-400' : 'bg-gray-400';
+            // Tooltip content
+            const tooltip = [
+              topic.name,
+              `(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})`,
+              ...(topic.tags || [])
+            ].join(' | ');
             return `
               <div class="absolute flex items-center shadow-sm ${color} rounded text-white text-sm px-4 py-2 cursor-pointer hover:opacity-90"
                    style="left:${x1}px; top:${y}px; width:${Math.max(30, x2-x1)}px; height:${barHeight-8}px; z-index:10"
-                   title="${topic.name} (${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})">
-                <span class="font-semibold">${topic.name}</span>
-                <span class="ml-2 text-xs text-white/80">(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})</span>
-                ${topic.tags?.map(tag => `<span class="ml-2 bg-white/20 rounded px-2 py-0.5 text-xs">${tag}</span>`).join('')}
+                   title="${tooltip.replace(/"/g, '&quot;')}">
+                <span class="font-semibold overflow-hidden whitespace-nowrap text-ellipsis" style="max-width: 150px;">${topic.name}</span>
               </div>
             `;
           }).join('')}
