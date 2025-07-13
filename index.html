@@ -82,6 +82,14 @@
           (a, b) => b.level - a.level || b.startDate - a.startDate
         );
       }
+      function isToday(date) {
+        const now = new Date();
+        return (
+          date.getFullYear() === now.getFullYear() &&
+          date.getMonth() === now.getMonth() &&
+          date.getDate() === now.getDate()
+        );
+      }
       function renderTimeline(
         topics,
         minDate,
@@ -167,7 +175,7 @@
                 style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
       }
       ${
-        topic.tags?.includes("fuzzy-end")
+        topic.tags?.includes("fuzzy-end") || isToday(topic.endDate)
           ? `<span class="absolute right-0" 
                 style="top:-5%; height:110%; width:10px; border-radius:2px;
                 background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);"></span>`
