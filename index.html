@@ -19,6 +19,7 @@
     // Helper: parse YYYY or YYYY-MM to Date
     function parseDate(str) {
       if (!str) return null;
+      str = String(str); // Ensure str is a string
       const parts = str.split('-');
       if (parts.length === 1) return new Date(Number(parts[0]), 0, 1);
       if (parts.length === 2) return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
@@ -59,7 +60,8 @@
     function renderTimeline(topics, minDate, maxDate) {
       const barHeight = 36;
       const barGap = 8;
-      const totalHeight = (Math.max(...topics.map(t => t.level)) + 1) * (barHeight + barGap) + 32;
+      const maxLevel = Math.max(...topics.map(t => t.level));
+      const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 32;
       const timelineWidth = 800;
       // Build year ticks (every year between minDate and maxDate)
       const years = [];
@@ -85,7 +87,8 @@
           ${topics.map(topic => {
             const x1 = dateToX(topic.startDate);
             const x2 = dateToX(topic.endDate);
-            const y = topic.level * (barHeight + barGap) + 32;
+            // INVERT the stacking:
+            const y = (maxLevel - topic.level) * (barHeight + barGap) + 32;
             const color = topic.tags?.includes('people') ? 'bg-blue-400' :
                           topic.tags?.includes('location') ? 'bg-green-400' : 'bg-gray-400';
             return `
@@ -145,8 +148,8 @@
     tags:
       - people
   - name: location 1
-    start: '2005'
-    end: '2018'
+    start: 2005
+    end: 2018
     tags:
       - location
   - name: project x
