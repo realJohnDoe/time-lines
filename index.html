@@ -89,8 +89,9 @@
             const x2 = dateToX(topic.endDate);
             // INVERT the stacking:
             const y = (maxLevel - topic.level) * (barHeight + barGap) + 32;
-            const color = topic.tags?.includes('people') ? 'bg-blue-400' :
-                          topic.tags?.includes('location') ? 'bg-green-400' : 'bg-gray-400';
+            const color = topic.tags?.includes('Who?') ? 'bg-yellow-400' :
+                          topic.tags?.includes('Where?') ? 'bg-green-400' : 
+                          topic.tags?.includes('What?') ? 'bg-blue-400' : 'bg-gray-400';
             return `
               <div class="absolute flex items-center shadow-sm ${color} rounded text-white text-sm px-4 py-2 cursor-pointer hover:opacity-90"
                    style="left:${x1}px; top:${y}px; width:${Math.max(30, x2-x1)}px; height:${barHeight-8}px; z-index:10"
@@ -146,22 +147,22 @@
     start: 2011-07
     end: 2015-09
     tags:
-      - people
+      - Who?
   - name: location 1
     start: 2005
     end: 2018
     tags:
-      - location
+      - Where?
   - name: project x
     start: 2014-01
     end: 2016-06
     tags:
-      - project
+      - What?
   - name: person b
     start: 2015-01
     end: 2017-03
     tags:
-      - people
+      - Who?
 `;
   </script>
 </body>
