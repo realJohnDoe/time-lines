@@ -153,20 +153,32 @@
                 ...(topic.tags || []),
               ].join(" | ");
               return `
-                <div class="absolute flex items-center shadow-sm ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90"
-                    style="left:${x1}px; top:${y}px; width:${
-                x2 - x1
-              }px; height:${barHeight - 8}px; z-index:10;"
-                    title="${tooltip.replace(/"/g, "&quot;")}">
-                    <span class="absolute left-0 ${color}" 
-                        style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>
-                    <span class="absolute right-0 ${color}" 
-                        style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>
-                    <span class="w-full text-center font-semibold overflow-hidden whitespace-nowrap text-ellipsis">${
-                      topic.name
-                    }</span>
-                </div>
-                `;
+  <div class="absolute flex items-center shadow-sm ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90"
+      style="left:${x1}px; top:${y}px; width:${x2 - x1}px; height:${
+                barHeight - 8
+              }px; z-index:10;"
+      title="${tooltip.replace(/"/g, "&quot;")}">
+      ${
+        topic.tags?.includes("fuzzy-start")
+          ? `<span class="absolute left-0" 
+                style="top:-5%; height:110%; width:10px; border-radius:2px;
+                background: linear-gradient(to right, rgba(255,255,255,0.8), transparent);"></span>`
+          : `<span class="absolute left-0 ${color}" 
+                style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
+      }
+      ${
+        topic.tags?.includes("fuzzy-end")
+          ? `<span class="absolute right-0" 
+                style="top:-5%; height:110%; width:10px; border-radius:2px;
+                background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);"></span>`
+          : `<span class="absolute right-0 ${color}" 
+                style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
+      }
+      <span class="w-full text-center font-semibold overflow-hidden whitespace-nowrap text-ellipsis">${
+        topic.name
+      }</span>
+  </div>
+`;
             })
             .join("")}
         </div>
