@@ -2,11 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>
-      YAML Timeline Stacked Bars with X-Axis Zoom and Dynamic Height
-    </title>
+    <title>YAML Timeline Stacked Bars (Full Width Responsive)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Optional: Hide y-overflow for timeline container */
+      #timeline {
+        overflow-y: hidden;
+      }
+    </style>
   </head>
   <body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
     <h1 class="text-2xl font-bold mb-4">YAML Timeline Stacked Bars</h1>
@@ -16,7 +20,7 @@
       class="w-full max-w-xl p-2 border rounded mb-4"
       placeholder="Paste your YAML here..."
     ></textarea>
-    <div class="flex items-center gap-4 mb-4">
+    <div class="flex items-center justify-center gap-4 mb-4 w-full max-w-8xl">
       <label for="x-zoom" class="font-semibold">X Zoom:</label>
       <input
         id="x-zoom"
@@ -37,7 +41,7 @@
     </div>
     <div
       id="timeline"
-      class="w-full max-w-3xl mt-8"
+      class="w-full max-w-7xl mt-8"
       style="overflow-x: auto; overflow-y: hidden"
     ></div>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
@@ -84,11 +88,14 @@
         maxDate,
         barHeight,
         barGap,
-        xZoom
+        xZoom,
+        containerWidth
       ) {
         const maxLevel = Math.max(...topics.map((t) => t.level));
         const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 48; // 48 for axis/labels padding
-        const timelineWidth = 800 * xZoom;
+
+        // Responsive: inner timeline width is containerWidth * xZoom, min 800px
+        const timelineWidth = Math.max(containerWidth * xZoom, 800);
 
         // Calculate year step to avoid label collision
         const totalYears = maxDate.getFullYear() - minDate.getFullYear() + 1;
@@ -180,6 +187,7 @@
           ).innerHTML = `<div class="text-red-600">No topics found in YAML.</div>`;
           return;
         }
+        // Use current date if end is missing
         const topics = data.topics
           .map((t) => ({
             ...t,
@@ -199,13 +207,19 @@
         const barHeight = 36;
         const barGap = 8;
         const xZoom = parseInt(document.getElementById("x-zoom").value, 10);
+
+        // Responsive: get the width of the timeline container (full screen width)
+        const containerWidth =
+          document.getElementById("timeline").clientWidth || window.innerWidth;
+
         document.getElementById("timeline").innerHTML = renderTimeline(
           topics,
           minDate,
           maxDate,
           barHeight,
           barGap,
-          xZoom
+          xZoom,
+          containerWidth
         );
         // Dynamically set timeline container height to fit content
         const maxLevel = Math.max(...topics.map((t) => t.level));
@@ -218,6 +232,8 @@
         document.getElementById("x-zoom-value").textContent = this.value + "x";
         render();
       };
+
+      window.addEventListener("resize", render);
 
       // Example YAML for convenience
       document.getElementById("yaml-input").value = `topics:
@@ -238,7 +254,7 @@
       - What?
   - name: person b
     start: 2015-01
-    end: 2017-03
+    # end is missing, will use current date
     tags:
       - Who?
 `;
