@@ -86,9 +86,9 @@
             const x1 = dateToX(topic.startDate);
             const x2 = dateToX(topic.endDate);
             const y = (maxLevel - topic.level) * (barHeight + barGap) + 32;
-            const color = topic.tags?.includes('Who?') ? 'bg-yellow-400' :
-                          topic.tags?.includes('Where?') ? 'bg-green-400' : 
-                          topic.tags?.includes('What?') ? 'bg-blue-400' : 'bg-gray-400';
+            const color = topic.tags?.includes('Who?') ? 'bg-yellow-500' :
+                          topic.tags?.includes('Where?') ? 'bg-green-700' : 
+                          topic.tags?.includes('What?') ? 'bg-blue-700' : 'bg-gray-400';
             const tooltip = [
               topic.name,
               `(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})`,
