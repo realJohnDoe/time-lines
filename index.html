@@ -1,157 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>YAML Timeline Stacked Bars with X-Axis Zoom and Dynamic Height</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
-  <h1 class="text-2xl font-bold mb-4">YAML Timeline Stacked Bars</h1>
-  <textarea id="yaml-input" rows="8" class="w-full max-w-xl p-2 border rounded mb-4" placeholder="Paste your YAML here..."></textarea>
-  <div class="flex items-center gap-4 mb-4">
-    <label for="x-zoom" class="font-semibold">X Zoom:</label>
-    <input id="x-zoom" type="range" min="1" max="10" value="1" step="1" class="w-48">
-    <span id="x-zoom-value" class="ml-2 text-gray-700">1x</span>
-    <button id="render-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4">Render Timeline</button>
-  </div>
-  <div id="timeline" class="w-full max-w-3xl mt-8" style="overflow-x:auto; overflow-y:hidden;"></div>
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-  <script>
-    function parseDate(str) {
-      if (!str) return null;
-      str = String(str);
-      const parts = str.split('-');
-      if (parts.length === 1) return new Date(Number(parts[0]), 0, 1);
-      if (parts.length === 2) return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-      return new Date(str);
-    }
-    function formatDate(date) {
-      if (!date) return '';
-      const y = date.getFullYear();
-      const m = date.getMonth() + 1;
-      return m === 1 ? `${y}` : `${y}-${String(m).padStart(2, '0')}`;
-    }
-    function assignLevels(topics) {
-      topics.sort((a, b) => a.startDate - b.startDate);
-      const levels = [];
-      for (const topic of topics) {
-        let lvl = 0;
-        while (true) {
-          const conflict = levels[lvl]?.some(
-            t => !(topic.endDate <= t.startDate || topic.startDate >= t.endDate)
-          );
-          if (!conflict) break;
-          lvl++;
+  <head>
+    <meta charset="UTF-8" />
+    <title>
+      YAML Timeline Stacked Bars with X-Axis Zoom and Dynamic Height
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
+    <h1 class="text-2xl font-bold mb-4">YAML Timeline Stacked Bars</h1>
+    <textarea
+      id="yaml-input"
+      rows="8"
+      class="w-full max-w-xl p-2 border rounded mb-4"
+      placeholder="Paste your YAML here..."
+    ></textarea>
+    <div class="flex items-center gap-4 mb-4">
+      <label for="x-zoom" class="font-semibold">X Zoom:</label>
+      <input
+        id="x-zoom"
+        type="range"
+        min="1"
+        max="10"
+        value="1"
+        step="1"
+        class="w-48"
+      />
+      <span id="x-zoom-value" class="ml-2 text-gray-700">1x</span>
+      <button
+        id="render-btn"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4"
+      >
+        Render Timeline
+      </button>
+    </div>
+    <div
+      id="timeline"
+      class="w-full max-w-3xl mt-8"
+      style="overflow-x: auto; overflow-y: hidden"
+    ></div>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script>
+      function parseDate(str) {
+        if (!str) return null;
+        str = String(str);
+        const parts = str.split("-");
+        if (parts.length === 1) return new Date(Number(parts[0]), 0, 1);
+        if (parts.length === 2)
+          return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+        return new Date(str);
+      }
+      function formatDate(date) {
+        if (!date) return "";
+        const y = date.getFullYear();
+        const m = date.getMonth() + 1;
+        return m === 1 ? `${y}` : `${y}-${String(m).padStart(2, "0")}`;
+      }
+      function assignLevels(topics) {
+        topics.sort((a, b) => a.startDate - b.startDate);
+        const levels = [];
+        for (const topic of topics) {
+          let lvl = 0;
+          while (true) {
+            const conflict = levels[lvl]?.some(
+              (t) =>
+                !(topic.endDate <= t.startDate || topic.startDate >= t.endDate)
+            );
+            if (!conflict) break;
+            lvl++;
+          }
+          if (!levels[lvl]) levels[lvl] = [];
+          levels[lvl].push(topic);
+          topic.level = lvl;
         }
-        if (!levels[lvl]) levels[lvl] = [];
-        levels[lvl].push(topic);
-        topic.level = lvl;
+        return topics.sort(
+          (a, b) => b.level - a.level || b.startDate - a.startDate
+        );
       }
-      return topics.sort((a, b) => b.level - a.level || b.startDate - a.startDate);
-    }
-    function renderTimeline(topics, minDate, maxDate, barHeight, barGap, xZoom) {
-      const maxLevel = Math.max(...topics.map(t => t.level));
-      const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 48; // 48 for axis/labels padding
-      const timelineWidth = 800 * xZoom;
+      function renderTimeline(
+        topics,
+        minDate,
+        maxDate,
+        barHeight,
+        barGap,
+        xZoom
+      ) {
+        const maxLevel = Math.max(...topics.map((t) => t.level));
+        const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 48; // 48 for axis/labels padding
+        const timelineWidth = 800 * xZoom;
 
-      // Calculate year step to avoid label collision
-      const totalYears = maxDate.getFullYear() - minDate.getFullYear() + 1;
-      let yearStep = 1;
-      if (totalYears / xZoom > 12) yearStep = 2;
-      if (totalYears / xZoom > 24) yearStep = 5;
-      if (totalYears / xZoom > 60) yearStep = 10;
+        // Calculate year step to avoid label collision
+        const totalYears = maxDate.getFullYear() - minDate.getFullYear() + 1;
+        let yearStep = 1;
+        if (totalYears / xZoom > 12) yearStep = 2;
+        if (totalYears / xZoom > 24) yearStep = 5;
+        if (totalYears / xZoom > 60) yearStep = 10;
 
-      // Build year ticks (every yearStep years)
-      const years = [];
-      for (let y = minDate.getFullYear(); y <= maxDate.getFullYear(); y += yearStep) years.push(y);
+        // Build year ticks (every yearStep years)
+        const years = [];
+        for (
+          let y = minDate.getFullYear();
+          y <= maxDate.getFullYear();
+          y += yearStep
+        )
+          years.push(y);
 
-      function dateToX(date) {
-        return ((date - minDate) / (maxDate - minDate)) * (timelineWidth - 80) + 60;
-      }
+        function dateToX(date) {
+          return (
+            ((date - minDate) / (maxDate - minDate)) * (timelineWidth - 80) + 60
+          );
+        }
 
-      return `
+        return `
         <div style="width:${timelineWidth}px; height:${totalHeight}px; position:relative;">
           <!-- Year Ticks -->
           <div class="absolute left-0 top-0 w-full h-8 pointer-events-none">
-            ${years.map(year => {
-              const x = dateToX(new Date(year, 0, 1));
-              return `<div style="position:absolute;left:${x}px;top:0;height:100%;width:1px;" class="border-l border-gray-200">
+            ${years
+              .map((year) => {
+                const x = dateToX(new Date(year, 0, 1));
+                return `<div style="position:absolute;left:${x}px;top:0;height:100%;width:1px;" class="border-l border-gray-200">
                 <div style="position:absolute;left:50%;transform:translateX(-50%);top:12px;width:50px;text-align:center;white-space:nowrap;font-size:12px;color:#888;">${year}</div>
               </div>`;
-            }).join('')}
+              })
+              .join("")}
           </div>
           <!-- Bars -->
-          ${topics.map(topic => {
-            const x1 = dateToX(topic.startDate);
-            const x2 = dateToX(topic.endDate);
-            const y = (maxLevel - topic.level) * (barHeight + barGap) + 32;
-            const color = topic.tags?.includes('Who?') ? 'bg-yellow-500' :
-                          topic.tags?.includes('Where?') ? 'bg-green-700' : 
-                          topic.tags?.includes('What?') ? 'bg-blue-700' : 'bg-gray-400';
-            const tooltip = [
-              topic.name,
-              `(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})`,
-              ...(topic.tags || [])
-            ].join(' | ');
-            return `
+          ${topics
+            .map((topic) => {
+              const x1 = dateToX(topic.startDate);
+              const x2 = dateToX(topic.endDate);
+              const y = (maxLevel - topic.level) * (barHeight + barGap) + 32;
+              const color = topic.tags?.includes("Who?")
+                ? "bg-yellow-500"
+                : topic.tags?.includes("Where?")
+                ? "bg-green-700"
+                : topic.tags?.includes("What?")
+                ? "bg-blue-700"
+                : "bg-gray-400";
+              const tooltip = [
+                topic.name,
+                `(${formatDate(topic.startDate)} → ${formatDate(
+                  topic.endDate
+                )})`,
+                ...(topic.tags || []),
+              ].join(" | ");
+              return `
               <div class="absolute flex items-center shadow-sm ${color} rounded text-white text-sm px-4 py-2 cursor-pointer hover:opacity-90"
-                   style="left:${x1}px; top:${y}px; width:${Math.max(30, x2-x1)}px; height:${barHeight-8}px; z-index:10"
-                   title="${tooltip.replace(/"/g, '&quot;')}">
-                <span class="font-semibold overflow-hidden whitespace-nowrap text-ellipsis" style="max-width: 150px;">${topic.name}</span>
+                   style="left:${x1}px; top:${y}px; width:${Math.max(
+                30,
+                x2 - x1
+              )}px; height:${barHeight - 8}px; z-index:10"
+                   title="${tooltip.replace(/"/g, "&quot;")}">
+                <span class="font-semibold overflow-hidden whitespace-nowrap text-ellipsis" style="max-width: 150px;">${
+                  topic.name
+                }</span>
               </div>
             `;
-          }).join('')}
+            })
+            .join("")}
         </div>
       `;
-    }
-
-    function render() {
-      const yamlText = document.getElementById('yaml-input').value;
-      let data;
-      try {
-        data = jsyaml.load(yamlText);
-      } catch (e) {
-        document.getElementById('timeline').innerHTML =
-          `<div class="text-red-600">YAML Parse Error: ${e.message}</div>`;
-        return;
       }
-      if (!data || !Array.isArray(data.topics)) {
-        document.getElementById('timeline').innerHTML =
-          `<div class="text-red-600">No topics found in YAML.</div>`;
-        return;
-      }
-      const topics = data.topics.map(t => ({
-        ...t,
-        startDate: parseDate(t.start),
-        endDate: parseDate(t.end)
-      })).filter(t => t.startDate && t.endDate);
-      if (!topics.length) {
-        document.getElementById('timeline').innerHTML =
-          `<div class="text-red-600">No valid topics with start and end dates.</div>`;
-        return;
-      }
-      const minDate = new Date(Math.min(...topics.map(t => t.startDate)));
-      const maxDate = new Date(Math.max(...topics.map(t => t.endDate)));
-      assignLevels(topics);
-      const barHeight = 36;
-      const barGap = 8;
-      const xZoom = parseInt(document.getElementById('x-zoom').value, 10);
-      document.getElementById('timeline').innerHTML = renderTimeline(topics, minDate, maxDate, barHeight, barGap, xZoom);
-      // Dynamically set timeline container height to fit content
-      const maxLevel = Math.max(...topics.map(t => t.level));
-      const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 48;
-      document.getElementById('timeline').style.height = totalHeight + 'px';
-    }
 
-    document.getElementById('render-btn').onclick = render;
-    document.getElementById('x-zoom').oninput = function() {
-      document.getElementById('x-zoom-value').textContent = this.value + 'x';
-      render();
-    };
+      function render() {
+        const yamlText = document.getElementById("yaml-input").value;
+        let data;
+        try {
+          data = jsyaml.load(yamlText);
+        } catch (e) {
+          document.getElementById(
+            "timeline"
+          ).innerHTML = `<div class="text-red-600">YAML Parse Error: ${e.message}</div>`;
+          return;
+        }
+        if (!data || !Array.isArray(data.topics)) {
+          document.getElementById(
+            "timeline"
+          ).innerHTML = `<div class="text-red-600">No topics found in YAML.</div>`;
+          return;
+        }
+        const topics = data.topics
+          .map((t) => ({
+            ...t,
+            startDate: parseDate(t.start),
+            endDate: t.end ? parseDate(t.end) : new Date(),
+          }))
+          .filter((t) => t.startDate && t.endDate);
+        if (!topics.length) {
+          document.getElementById(
+            "timeline"
+          ).innerHTML = `<div class="text-red-600">No valid topics with start and end dates.</div>`;
+          return;
+        }
+        const minDate = new Date(Math.min(...topics.map((t) => t.startDate)));
+        const maxDate = new Date(Math.max(...topics.map((t) => t.endDate)));
+        assignLevels(topics);
+        const barHeight = 36;
+        const barGap = 8;
+        const xZoom = parseInt(document.getElementById("x-zoom").value, 10);
+        document.getElementById("timeline").innerHTML = renderTimeline(
+          topics,
+          minDate,
+          maxDate,
+          barHeight,
+          barGap,
+          xZoom
+        );
+        // Dynamically set timeline container height to fit content
+        const maxLevel = Math.max(...topics.map((t) => t.level));
+        const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 48;
+        document.getElementById("timeline").style.height = totalHeight + "px";
+      }
 
-    // Example YAML for convenience
-    document.getElementById('yaml-input').value = `topics:
+      document.getElementById("render-btn").onclick = render;
+      document.getElementById("x-zoom").oninput = function () {
+        document.getElementById("x-zoom-value").textContent = this.value + "x";
+        render();
+      };
+
+      // Example YAML for convenience
+      document.getElementById("yaml-input").value = `topics:
   - name: person a
     start: 2011-07
     end: 2015-09
@@ -173,8 +242,8 @@
     tags:
       - Who?
 `;
-    // Initial render
-    render();
-  </script>
-</body>
+      // Initial render
+      render();
+    </script>
+  </body>
 </html>
