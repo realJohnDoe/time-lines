@@ -46,15 +46,33 @@
     ></div>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <script>
-      function parseDate(str) {
-        if (!str) return null;
-        str = String(str);
-        const parts = str.split("-");
-        if (parts.length === 1) return new Date(Number(parts[0]), 0, 1);
-        if (parts.length === 2)
-          return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-        return new Date(str);
+      function parseDate(val) {
+        if (!val) return null;
+        if (val instanceof Date && !isNaN(val)) return val;
+        if (typeof val === "number" && val > 999 && val < 3000) {
+          // Unquoted year in YAML, e.g. 2023
+          return new Date(val, 0, 1);
+        }
+        if (typeof val === "string") {
+          const parts = val.trim().split("-");
+          if (parts.length === 1 && /^\d{4}$/.test(parts[0])) {
+            // Quoted year in YAML, e.g. "2023"
+            return new Date(Number(parts[0]), 0, 1);
+          }
+          if (
+            parts.length === 2 &&
+            /^\d{4}$/.test(parts[0]) &&
+            /^\d{1,2}$/.test(parts[1])
+          ) {
+            // Quoted year-month in YAML, e.g. "2023-07"
+            return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+          }
+        }
+        // Debug log for unsupported formats
+        console.warn("[parseDate] Unsupported date format or value:", val);
+        return null;
       }
+
       function formatDate(date) {
         if (!date) return "";
         const y = date.getFullYear();
@@ -90,6 +108,7 @@
           date.getDate() === now.getDate()
         );
       }
+
       function renderTimeline(
         topics,
         minDate,
