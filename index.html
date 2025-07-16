@@ -12,29 +12,33 @@
       }
     </style>
   </head>
-  <body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
-    <h1 class="text-2xl font-bold mb-4">YAML Timeline Stacked Bars</h1>
-    <textarea
-      id="yaml-input"
-      rows="8"
-      class="w-full max-w-xl p-2 border rounded mb-4"
-      placeholder="Paste your YAML here..."
-    ></textarea>
-    <div class="flex items-center justify-center gap-4 mb-4 w-full max-w-8xl">
-      <label for="x-zoom" class="font-semibold">X Zoom:</label>
-      <input
-        id="x-zoom"
-        type="range"
-        min="1"
-        max="10"
-        value="1"
-        step="1"
-        class="w-48"
-      />
-      <span id="x-zoom-value" class="ml-2 text-gray-700">1x</span>
+  <body class="bg-gray-50 w-screen h-screen flex flex-col">
+  <div class="flex w-full max-w-full min-h-screen items-start gap-8">
+    <!-- Sidebar -->
+    <div class="w-[40rem] min-w-80 flex flex-col gap-4 p-4 bg-white rounded shadow h-full">
+      <label class="font-semibold block">Paste your YAML:</label>
+      <textarea
+        id="yaml-input"
+        rows="14"
+        class="w-full p-2 border rounded h-full"
+        placeholder="Paste your YAML here..."
+      ></textarea>
+      <div class="flex items-center gap-2">
+        <label for="x-zoom" class="font-semibold">X Zoom:</label>
+        <input
+          id="x-zoom"
+          type="range"
+          min="1"
+          max="10"
+          value="1"
+          step="1"
+          class="w-32"
+        />
+        <span id="x-zoom-value" class="text-gray-700">1x</span>
+      </div>
       <button
         id="render-btn"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
       >
         Render Timeline
       </button>
