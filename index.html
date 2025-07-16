@@ -23,19 +23,6 @@
         class="w-full p-2 border rounded h-full"
         placeholder="Paste your YAML here..."
       ></textarea>
-      <div class="flex items-center gap-2">
-        <label for="x-zoom" class="font-semibold">X Zoom:</label>
-        <input
-          id="x-zoom"
-          type="range"
-          min="1"
-          max="10"
-          value="1"
-          step="1"
-          class="w-32"
-        />
-        <span id="x-zoom-value" class="text-gray-700">1x</span>
-      </div>
       <button
         id="render-btn"
         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
@@ -48,6 +35,20 @@
       class="flex-1 h-full w-full mx-4 py-2"
       style="overflow-x: auto; overflow-y: hidden"
     ></div>
+    <!-- Zoom Buttons: fixed to bottom-right of timeline container -->
+    <div id="zoom-controls"
+      class="fixed z-20 flex flex-row gap-2 bottom-8 right-4">
+      <button id="zoom-in"
+        class="w-10 h-10 flex items-center justify-center bg-gray-300 hover:bg-gray-700 text-white text-2xl font-bold leading-none font-mono rounded shadow-sm transition"
+        title="Zoom in (increase horizontal scale)">
+        +
+      </button>
+      <button id="zoom-out"
+        class="w-10 h-10 flex items-center justify-center bg-gray-300 hover:bg-gray-700 text-white text-2xl font-bold leading-none font-mono rounded shadow-sm transition"
+        title="Zoom out (decrease horizontal scale)">
+        –
+      </button>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <script>
       function parseDate(val) {
@@ -112,6 +113,19 @@
           date.getDate() === now.getDate()
         );
       }
+
+      let zoomLevel = 1;
+      const minZoom = 1;
+      const maxZoom = 10;
+
+      function handleZoom(delta) {
+        const oldZoom = zoomLevel;
+        zoomLevel = Math.max(minZoom, Math.min(maxZoom, zoomLevel + delta));
+        if (zoomLevel !== oldZoom) render();
+      }
+
+      document.getElementById("zoom-in").onclick = () => handleZoom(1);
+      document.getElementById("zoom-out").onclick = () => handleZoom(-1);
 
       function renderTimeline(
         topics,
@@ -279,7 +293,7 @@
         assignLevels(topics);
         const barHeight = 36;
         const barGap = 2;
-        const xZoom = parseInt(document.getElementById("x-zoom").value, 10);
+        const xZoom = zoomLevel;
 
         // Responsive: get the width of the timeline container (full screen width)
         const containerWidth =
@@ -300,10 +314,6 @@
       }
 
       document.getElementById("render-btn").onclick = render;
-      document.getElementById("x-zoom").oninput = function () {
-        document.getElementById("x-zoom-value").textContent = this.value + "x";
-        render();
-      };
 
       window.addEventListener("resize", render);
 
