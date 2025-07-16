@@ -15,7 +15,7 @@
   <body class="bg-gray-50 w-screen h-screen flex flex-col">
   <div class="flex w-full h-full items-start">
     <!-- Sidebar -->
-    <div class="w-[40rem] min-w-80 flex flex-col gap-4 p-4 bg-white rounded shadow h-full">
+    <div class="w-[30rem] min-w-80 flex flex-col gap-4 p-4 bg-white rounded shadow h-full">
       <label class="font-semibold block">Paste your YAML:</label>
       <textarea
         id="yaml-input"
@@ -151,72 +151,96 @@
         }
 
         return `
-        <div style="width:${timelineWidth}px; height:100%; min-height:${totalHeight}px; position:relative;">
-          <!-- Year Ticks -->
-          <div class="absolute left-0 top-0 w-full h-full pointer-events-none">
-            ${years
-              .map((year) => {
-                const x = dateToX(new Date(year, 0, 1));
-                return `
-                  <div style="position:absolute;left:${x}px;top:0;height:100%;width:1px;z-index:1;" class="border-l border-gray-200">
-                    <span style="position:absolute;left:50%;top:0;transform:translateX(-50%);width:50px;text-align:center;white-space:nowrap;font-size:12px;color:#888;background:rgba(255,255,255,0.8);z-index:5;">
-                      ${year}
-                    </span>
-                  </div>`;
-              })
-              .join("")}
-          </div>
-          <!-- Bars -->
-          ${topics
-            .map((topic) => {
-              const x1 = dateToX(topic.startDate);
-              const x2 = dateToX(topic.endDate);
-              const y = (maxLevel - topic.level) * (barHeight + barGap) + 32;
-              const color = topic.tags?.includes("Who?")
-                ? "bg-yellow-500"
-                : topic.tags?.includes("Where?")
-                ? "bg-green-700"
-                : topic.tags?.includes("What?")
-                ? "bg-blue-700"
-                : "bg-gray-400";
-              const tooltip = [
-                topic.name,
-                `(${formatDate(topic.startDate)} → ${formatDate(
-                  topic.endDate
-                )})`,
-                ...(topic.tags || []),
-              ].join(" | ");
-              return `
-  <div class="absolute flex items-center shadow-sm ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90"
-      style="left:${x1}px; top:${y}px; width:${x2 - x1}px; height:${
-                barHeight - 8
-              }px; z-index:10;"
-      title="${tooltip.replace(/"/g, "&quot;")}">
-      ${
-        topic.tags?.includes("fuzzy-start")
-          ? `<span class="absolute left-0" 
-                style="top:-5%; height:110%; width:10px; border-radius:2px;
-                background: linear-gradient(to right, rgba(255,255,255,0.8), transparent);"></span>`
-          : `<span class="absolute left-0 ${color}" 
-                style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
-      }
-      ${
-        topic.tags?.includes("fuzzy-end") || isToday(topic.endDate)
-          ? `<span class="absolute right-0" 
-                style="top:-5%; height:110%; width:10px; border-radius:2px;
-                background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);"></span>`
-          : `<span class="absolute right-0 ${color}" 
-                style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
-      }
-      <span class="w-full text-center font-semibold overflow-hidden whitespace-nowrap text-ellipsis">${
-        topic.name
-      }</span>
+  <div style="width:${timelineWidth}px; height:100%; min-height:${totalHeight}px; position:relative;">
+    <!-- Year Grid Lines -->
+    <div class="absolute left-0 top-0 w-full h-full pointer-events-none z-0">
+      ${years
+        .map((year) => {
+          const x = dateToX(new Date(year, 0, 1));
+          return `
+            <div style="position:absolute;left:${x}px;top:0;height:100%;width:1px;" class="border-l border-gray-200"></div>
+          `;
+        })
+        .join("")}
+    </div>
+    <!-- Bars, bottom-aligned -->
+    ${topics
+      .map((topic) => {
+        const x1 = dateToX(topic.startDate);
+        const x2 = dateToX(topic.endDate);
+        // Bars stack upwards from the bottom
+        const barAreaBottom = 32;
+        const barAreaHeight = totalHeight - barAreaBottom - 32; // Reserve space for top and bottom label
+        const y =
+          barAreaHeight -
+          ((topic.level + 1) * (barHeight + barGap)) +
+          barGap +
+          32; // offset for top labels
+        const color = topic.tags?.includes("Who?")
+          ? "bg-yellow-500"
+          : topic.tags?.includes("Where?")
+          ? "bg-green-700"
+          : topic.tags?.includes("What?")
+          ? "bg-blue-700"
+          : "bg-gray-400";
+        const tooltip = [
+          topic.name,
+          `(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})`,
+          ...(topic.tags || []),
+        ].join(" | ");
+        return `
+<div class="absolute flex items-center shadow-sm ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90"
+    style="left:${x1}px; top:${y}px; width:${x2 - x1}px; height:${barHeight - 8}px; z-index:10;"
+    title="${tooltip.replace(/"/g, "&quot;")}">
+    ${
+      topic.tags?.includes("fuzzy-start")
+        ? `<span class="absolute left-0" 
+              style="top:-5%; height:110%; width:10px; border-radius:2px;
+              background: linear-gradient(to right, rgba(255,255,255,0.8), transparent);"></span>`
+        : `<span class="absolute left-0 ${color}" 
+              style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
+    }
+    ${
+      topic.tags?.includes("fuzzy-end") || isToday(topic.endDate)
+        ? `<span class="absolute right-0" 
+              style="top:-5%; height:110%; width:10px; border-radius:2px;
+              background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);"></span>`
+        : `<span class="absolute right-0 ${color}" 
+              style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
+    }
+    <span class="w-full text-center font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
+      ${topic.name}
+    </span>
+</div>
+`;
+      })
+      .join("")}
+    <!-- Year Labels at Top -->
+    <div class="absolute left-0 w-full"
+         style="top:0;height:32px;pointer-events:none;">
+      ${years
+        .map((year) => {
+          const x = dateToX(new Date(year,0,1));
+          return `<span style="position:absolute;left:${x}px;top:0;transform:translateX(-50%);width:50px;text-align:center;white-space:nowrap;font-size:12px;color:#888;background:rgba(255,255,255,0.8);z-index:5;">
+            ${year}
+          </span>`;
+        })
+        .join("")}
+    </div>
+    <!-- Year Labels at Bottom -->
+    <div class="absolute left-0 w-full"
+         style="bottom:0;height:32px;pointer-events:none;">
+      ${years
+        .map((year) => {
+          const x = dateToX(new Date(year,0,1));
+          return `<span style="position:absolute;left:${x}px;bottom:0;transform:translateX(-50%);width:50px;text-align:center;white-space:nowrap;font-size:12px;color:#888;background:rgba(255,255,255,0.8);z-index:5;">
+            ${year}
+          </span>`;
+        })
+        .join("")}
+    </div>
   </div>
 `;
-            })
-            .join("")}
-        </div>
-      `;
       }
 
       function render() {
