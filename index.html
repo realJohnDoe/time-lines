@@ -327,69 +327,25 @@
         window.addEventListener("resize", render);
 
         // Example YAML for convenience
-        document.getElementById("yaml-input").value = `topics:
-  # Shows long-running event and 'Where?' tag
-  - name: Primary Residence
-    start: 2005
-    end: 2023-08
-    tags:
-      - Where?
-
-  # Shows stacking on top of the residence
-  - name: University Studies
-    start: 2008-09
-    end: 2012-06
-    tags:
-      - What?
-
-  # Shows fuzzy start and stacking
-  - name: First Job
-    start: 2012-07
-    end: 2015-12
-    tags:
-      - What?
-      - fuzzy-start
-
-  # Shows 'Who?' tag and more stacking
-  - name: Relationship with Person A
-    start: 2011-07
-    end: 2015-09
-    tags:
-      - Who?
-
-  # Shows a short event and a different 'Where?'
-  - name: Trip to Japan
-    start: 2016-04
-    end: 2016-05
-    tags:
-      - Where?
-
-  # Shows fuzzy end
-  - name: Side Project "Chronos"
-    start: 2014-01
-    end: 2016-06
-    tags:
-      - What?
-      - fuzzy-end
-
-  # Shows an event that continues to the present
-  - name: Current Job
-    start: 2016-01
-    # end is missing, will use current date
-    tags:
-      - What?
-
-  # Shows another concurrent relationship
-  - name: Mentorship with Person B
-    start: 2018-03
-    end: 2021-11
-    tags:
-      - Who?
-      - fuzzy-start
-      - fuzzy-end
-`;
-        // Initial render
-        render();
+        fetch("example.yml")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then((yamlText) => {
+            document.getElementById("yaml-input").value = yamlText;
+            // Initial render
+            render();
+          })
+          .catch((e) => {
+            console.error("Error fetching example.yml:", e);
+            document.getElementById("yaml-input").placeholder =
+              "Could not load example.yml. Please paste your YAML here...";
+            // Initial render, to show the empty state or error
+            render();
+          });
       </script>
     </div>
   </body>
