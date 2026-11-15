@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Hide y-overflow for timeline container */
+#timeline {
+  overflow-y: hidden;
+}
