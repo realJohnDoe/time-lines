@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import { load } from "js-yaml";
 import "./style.css";
 
 function parseDate(val) {
@@ -210,7 +210,7 @@ function render() {
   const yamlText = document.getElementById("yaml-input").value;
   let data;
   try {
-    data = yaml.load(yamlText);
+    data = load(yamlText);
   } catch (e) {
     document.getElementById(
       "timeline"
