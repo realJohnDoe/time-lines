@@ -119,17 +119,6 @@ function renderTimeline(
 
   return `
   <div style="width:${timelineWidth}px; height:100%; min-height:${totalHeight}px; position:relative;">
-    <!-- Year Grid Lines -->
-    <div class="absolute left-0 top-0 w-full h-full pointer-events-none z-0">
-      ${years
-.map((year) => {
-  const x = dateToX(new Date(year, 0, 1));
-  return `
-    <div style="position:absolute;left:${x}px;top:0;height:100%;width:1px;" class="border-l border-gray-200"></div>
-  `;
-})
-.join("")}
-    </div>
     <!-- Bars, bottom-aligned -->
     ${topics
       .map((topic) => {
