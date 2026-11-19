@@ -112,7 +112,7 @@ function renderTimeline(
         return `
 <div class="absolute flex items-center shadow-xs ${color} text-white text-sm py-2 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black z-10"
     tabindex="0" role="group" aria-label="${escapeHtml(tooltip)}"
-    style="left:${x1}px; bottom:${y}px; width:${x2 - x1}px; height:${barHeight - 8}px;"
+    style="left:${x1}px; bottom:${y}px; width:${Math.max(x2 - x1, 4)}px; height:${barHeight - 8}px;"
     title="${escapeHtml(tooltip)}">
     ${cap("left", topic.tags?.includes("fuzzy-start"), color)}
     ${cap("right", topic.tags?.includes("fuzzy-end") || isToday(topic.endDate), color)}
@@ -132,6 +132,8 @@ function renderTimeline(
 }
 
 function render() {
+  const problemList = document.getElementById("topic-problems");
+  problemList.innerHTML = "";
   const yamlText = document.getElementById("yaml-input").value;
   let data;
   try {
@@ -149,15 +151,13 @@ function render() {
     return;
   }
   const { topics, problems } = validateTopics(data.topics);
-  const warnings = problems.length
-    ? `<div class="text-red-600 mb-2">${problems
-        .map((p) => `<div>${escapeHtml(p)}</div>`)
-        .join("")}</div>`
-    : "";
+  problemList.innerHTML = problems
+    .map((p) => `<li>${escapeHtml(p)}</li>`)
+    .join("");
   if (!topics.length) {
     document.getElementById(
       "timeline"
-    ).innerHTML = `${warnings}<div class="text-red-600">No valid topics with start and end dates.</div>`;
+    ).innerHTML = `<div class="text-red-600">No valid topics with start and end dates.</div>`;
     return;
   }
   const minDate = new Date(Math.min(...topics.map((t) => t.startDate)));
@@ -175,7 +175,7 @@ function render() {
     document.getElementById("timeline-wrapper").clientWidth ||
     window.innerWidth;
 
-  document.getElementById("timeline").innerHTML = warnings + renderTimeline(
+  document.getElementById("timeline").innerHTML = renderTimeline(
     topics,
     minDate,
     maxDate,
