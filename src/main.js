@@ -3,7 +3,6 @@ import "./style.css";
 
 function parseDate(val) {
   if (!val) return null;
-  if (val instanceof Date && !isNaN(val)) return val;
   if (typeof val === "number" && val > 999 && val < 3000) {
     // Unquoted year in YAML, e.g. 2023
     return new Date(val, 0, 1);
@@ -21,6 +20,16 @@ function parseDate(val) {
     ) {
       // Quoted year-month in YAML, e.g. "2023-07"
       return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+    }
+    if (
+      parts.length === 3 &&
+      /^\d{4}$/.test(parts[0]) &&
+      /^\d{1,2}$/.test(parts[1]) &&
+      /^\d{1,2}$/.test(parts[2])
+    ) {
+      // Full date in YAML, e.g. 2023-08-01. js-yaml 5 loads it as a string
+      // (YAML 1.2 core schema), so build a local date rather than UTC.
+      return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     }
   }
   // Debug log for unsupported formats
