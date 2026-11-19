@@ -50,6 +50,13 @@ topics:
     tags:
       - What?
 
+  # Shows a day-precision date
+  - name: Conference Talk
+    start: 2023-08-01
+    end: 2023-08-03
+    tags:
+      - What?
+
   # Shows another concurrent relationship
   - name: Mentorship with Person B
     start: 2018-03
