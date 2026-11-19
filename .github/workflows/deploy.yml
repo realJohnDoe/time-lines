@@ -25,6 +25,7 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm test
       - run: pnpm run build
       - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/main'
