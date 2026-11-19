@@ -130,60 +130,64 @@ function renderTimeline(
     );
   }
 
+  // Start/end edge of a bar: a solid 2px line in the bar's colour, or a fade when fuzzy.
+  const edgeClass = { left: "left-0", right: "right-0" };
+  const cap = (edge, fuzzy, color) =>
+    fuzzy
+      ? `<span class="absolute ${edgeClass[edge]} -top-[5%] h-[110%] w-2.5 rounded-[2px] ${
+          edge === "left"
+            ? "bg-[linear-gradient(to_right,rgba(255,255,255,0.8),transparent)]"
+            : "bg-[linear-gradient(to_left,rgba(255,255,255,0.8),transparent)]"
+        }"></span>`
+      : `<span class="absolute ${edgeClass[edge]} -top-[5%] h-[110%] w-0.5 rounded-[2px] ${color}"></span>`;
+
+  // One row of year labels, pinned to the top or bottom edge (`pos`).
+  const yearRow = (pos) => `
+    <div class="absolute left-0 w-full ${pos} h-8 pointer-events-none">
+      ${years
+        .map(
+          (year) =>
+            `<span class="absolute ${pos} -translate-x-1/2 w-[50px] text-center whitespace-nowrap text-[12px] text-[#888] bg-white/80 z-[5]" style="left:${dateToX(new Date(year, 0, 1))}px;">${year}</span>`
+        )
+        .join("")}
+    </div>`;
+
   return `
-  <div style="width:${timelineWidth}px; height:100%; min-height:${totalHeight}px; position:relative;">
+  <div class="relative h-full" style="width:${timelineWidth}px; min-height:${totalHeight}px;">
     <!-- Year Grid Lines -->
     <div class="absolute left-0 top-0 w-full h-full pointer-events-none z-0">
       ${years
-.map((year) => {
-  const x = dateToX(new Date(year, 0, 1));
-  return `
-    <div style="position:absolute;left:${x}px;top:0;height:100%;width:1px;" class="border-l border-gray-200"></div>
-  `;
-})
-.join("")}
+        .map(
+          (year) =>
+            `<div class="absolute top-0 h-full w-px border-l border-gray-200" style="left:${dateToX(new Date(year, 0, 1))}px;"></div>`
+        )
+        .join("")}
     </div>
     <!-- Bars, bottom-aligned -->
     ${topics
       .map((topic) => {
-const x1 = dateToX(topic.startDate);
-const x2 = dateToX(topic.endDate);
-// Bars stack upwards from the bottom
-const y = 32 + topic.level * (barHeight + barGap);
-const color = topic.tags?.includes("Who?")
-  ? "bg-yellow-500"
-  : topic.tags?.includes("Where?")
-  ? "bg-green-700"
-  : topic.tags?.includes("What?")
-  ? "bg-blue-700"
-  : "bg-gray-400";
-const tooltip = [
-  topic.name,
-  `(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})`,
-  ...(topic.tags || []),
-].join(" | ");
-return `
-<div class="absolute flex items-center shadow-xs ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90"
-    style="left:${x1}px; bottom:${y}px; width:${x2 - x1}px; height:${
-  barHeight - 8
-}px; z-index:10;"
+        const x1 = dateToX(topic.startDate);
+        const x2 = dateToX(topic.endDate);
+        // Bars stack upwards from the bottom
+        const y = 32 + topic.level * (barHeight + barGap);
+        const color = topic.tags?.includes("Who?")
+          ? "bg-yellow-500"
+          : topic.tags?.includes("Where?")
+          ? "bg-green-700"
+          : topic.tags?.includes("What?")
+          ? "bg-blue-700"
+          : "bg-gray-400";
+        const tooltip = [
+          topic.name,
+          `(${formatDate(topic.startDate)} → ${formatDate(topic.endDate)})`,
+          ...(topic.tags || []),
+        ].join(" | ");
+        return `
+<div class="absolute flex items-center shadow-xs ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90 z-10"
+    style="left:${x1}px; bottom:${y}px; width:${x2 - x1}px; height:${barHeight - 8}px;"
     title="${escapeHtml(tooltip)}">
-    ${
-      topic.tags?.includes("fuzzy-start")
-? `<span class="absolute left-0" 
-      style="top:-5%; height:110%; width:10px; border-radius:2px;
-      background: linear-gradient(to right, rgba(255,255,255,0.8), transparent);"></span>`
-: `<span class="absolute left-0 ${color}" 
-      style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
-    }
-    ${
-      topic.tags?.includes("fuzzy-end") || isToday(topic.endDate)
-? `<span class="absolute right-0" 
-      style="top:-5%; height:110%; width:10px; border-radius:2px;
-      background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);"></span>`
-: `<span class="absolute right-0 ${color}" 
-      style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
-    }
+    ${cap("left", topic.tags?.includes("fuzzy-start"), color)}
+    ${cap("right", topic.tags?.includes("fuzzy-end") || isToday(topic.endDate), color)}
     <span class="w-full text-center font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
       ${escapeHtml(topic.name)}
     </span>
@@ -192,29 +196,9 @@ return `
       })
       .join("")}
     <!-- Year Labels at Top -->
-    <div class="absolute left-0 w-full"
- style="top:0;height:32px;pointer-events:none;">
-      ${years
-.map((year) => {
-  const x = dateToX(new Date(year, 0, 1));
-  return `<span style="position:absolute;left:${x}px;top:0;transform:translateX(-50%);width:50px;text-align:center;white-space:nowrap;font-size:12px;color:#888;background:rgba(255,255,255,0.8);z-index:5;">
-    ${year}
-  </span>`;
-})
-.join("")}
-    </div>
+    ${yearRow("top-0")}
     <!-- Year Labels at Bottom -->
-    <div class="absolute left-0 w-full"
- style="bottom:0;height:32px;pointer-events:none;">
-      ${years
-.map((year) => {
-  const x = dateToX(new Date(year, 0, 1));
-  return `<span style="position:absolute;left:${x}px;bottom:0;transform:translateX(-50%);width:50px;text-align:center;white-space:nowrap;font-size:12px;color:#888;background:rgba(255,255,255,0.8);z-index:5;">
-    ${year}
-  </span>`;
-})
-.join("")}
-    </div>
+    ${yearRow("bottom-0")}
   </div>
 `;
 }
@@ -271,9 +255,6 @@ function render() {
     xZoom,
     containerWidth
   );
-  // Dynamically set timeline container height to fit content
-  const maxLevel = Math.max(...topics.map((t) => t.level));
-  const totalHeight = (maxLevel + 1) * (barHeight + barGap) + 48;
 }
 
 document.getElementById("render-btn").onclick = render;
