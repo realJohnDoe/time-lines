@@ -1,6 +1,10 @@
 import { load } from "js-yaml";
 import "./style.css";
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
+}
+
 function parseDate(val) {
   if (!val) return null;
   if (typeof val === "number" && val > 999 && val < 3000) {
@@ -163,7 +167,7 @@ return `
     style="left:${x1}px; bottom:${y}px; width:${x2 - x1}px; height:${
   barHeight - 8
 }px; z-index:10;"
-    title="${tooltip.replace(/"/g, "&quot;")}">
+    title="${escapeHtml(tooltip)}">
     ${
       topic.tags?.includes("fuzzy-start")
 ? `<span class="absolute left-0" 
@@ -181,7 +185,7 @@ return `
       style="top:-5%; height:110%; width:2px; border-radius:2px;"></span>`
     }
     <span class="w-full text-center font-semibold overflow-hidden whitespace-nowrap text-ellipsis">
-      ${topic.name}
+      ${escapeHtml(topic.name)}
     </span>
 </div>
 `;
@@ -223,7 +227,7 @@ function render() {
   } catch (e) {
     document.getElementById(
       "timeline"
-    ).innerHTML = `<div class="text-red-600">YAML Parse Error: ${e.message}</div>`;
+    ).innerHTML = `<div class="text-red-600">YAML Parse Error: ${escapeHtml(e.message)}</div>`;
     return;
   }
   if (!data || !Array.isArray(data.topics)) {
