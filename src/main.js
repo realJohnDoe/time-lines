@@ -1,6 +1,6 @@
 import { load } from "js-yaml";
 import "./style.css";
-import { parseDate, formatDate, assignLevels, isToday } from "./timeline.js";
+import { validateTopics, padSpan, formatDate, assignLevels, isToday } from "./timeline.js";
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
@@ -148,22 +148,23 @@ function render() {
     ).innerHTML = `<div class="text-red-600">No topics found in YAML.</div>`;
     return;
   }
-  // Use current date if end is missing
-  const topics = data.topics
-    .map((t) => ({
-      ...t,
-      startDate: parseDate(t.start),
-      endDate: t.end ? parseDate(t.end) : new Date(),
-    }))
-    .filter((t) => t.startDate && t.endDate);
+  const { topics, problems } = validateTopics(data.topics);
+  const warnings = problems.length
+    ? `<div class="text-red-600 mb-2">${problems
+        .map((p) => `<div>${escapeHtml(p)}</div>`)
+        .join("")}</div>`
+    : "";
   if (!topics.length) {
     document.getElementById(
       "timeline"
-    ).innerHTML = `<div class="text-red-600">No valid topics with start and end dates.</div>`;
+    ).innerHTML = `${warnings}<div class="text-red-600">No valid topics with start and end dates.</div>`;
     return;
   }
   const minDate = new Date(Math.min(...topics.map((t) => t.startDate)));
-  const maxDate = new Date(Math.max(...topics.map((t) => t.endDate)));
+  const maxDate = padSpan(
+    minDate,
+    new Date(Math.max(...topics.map((t) => t.endDate)))
+  );
   assignLevels(topics);
   const barHeight = 36;
   const barGap = 2;
@@ -174,7 +175,7 @@ function render() {
     document.getElementById("timeline-wrapper").clientWidth ||
     window.innerWidth;
 
-  document.getElementById("timeline").innerHTML = renderTimeline(
+  document.getElementById("timeline").innerHTML = warnings + renderTimeline(
     topics,
     minDate,
     maxDate,
