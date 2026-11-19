@@ -110,7 +110,8 @@ function renderTimeline(
           ...(topic.tags || []),
         ].join(" | ");
         return `
-<div class="absolute flex items-center shadow-xs ${color} text-white text-sm py-2 cursor-pointer hover:opacity-90 z-10"
+<div class="absolute flex items-center shadow-xs ${color} text-white text-sm py-2 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black z-10"
+    tabindex="0" role="group" aria-label="${escapeHtml(tooltip)}"
     style="left:${x1}px; bottom:${y}px; width:${x2 - x1}px; height:${barHeight - 8}px;"
     title="${escapeHtml(tooltip)}">
     ${cap("left", topic.tags?.includes("fuzzy-start"), color)}

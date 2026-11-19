@@ -60,7 +60,7 @@ export function assignLevels(topics) {
     topic.level = lvl;
   }
   return topics.sort(
-    (a, b) => b.level - a.level || b.startDate - a.startDate
+    (a, b) => b.level - a.level || a.startDate - b.startDate
   );
 }
 export function isToday(date, now = new Date()) {

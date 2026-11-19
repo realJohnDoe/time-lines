@@ -49,3 +49,13 @@ test("isToday compares against the given now", () => {
   assert.equal(isToday(new Date(2024, 4, 10, 1), now), true);
   assert.equal(isToday(new Date(2024, 4, 11), now), false);
 });
+
+test("assignLevels orders rows top-down and each row chronologically", () => {
+  const ts = assignLevels([
+    topic("late", 2010, 2012),
+    topic("outer", 2000, 2020),
+    topic("early", 2001, 2003),
+    topic("mid", 2005, 2007),
+  ]);
+  assert.deepEqual(ts.map((t) => t.name), ["early", "mid", "late", "outer"]);
+});
