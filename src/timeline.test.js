@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { load } from "js-yaml";
 import { parseDate, formatDate, assignLevels, isToday, validateTopics, padSpan } from "./timeline.js";
 
 const ymd = (d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()];
@@ -86,4 +88,11 @@ test("padSpan widens a zero span to a year", () => {
   const d = new Date(2023, 0, 1);
   assert.deepEqual(ymd(padSpan(d, d)), [2024, 1, 1]);
   assert.equal(padSpan(d, new Date(2030, 0, 1)).getFullYear(), 2030);
+});
+
+test("public/example.yml parses through js-yaml with no invalid topics", () => {
+  const data = load(readFileSync(new URL("../public/example.yml", import.meta.url), "utf8"));
+  const { topics, problems } = validateTopics(data.topics);
+  assert.equal(topics.length, 9);
+  assert.deepEqual(problems, []);
 });
