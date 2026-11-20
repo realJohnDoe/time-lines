@@ -70,3 +70,39 @@ export function isToday(date, now = new Date()) {
     date.getDate() === now.getDate()
   );
 }
+
+const present = (v) => v != null && v !== "";
+
+// Parse raw YAML topics into drawable ones plus a list of human-readable
+// problems for the rest. An absent `end` means "now"; only present-but-
+// unparsable values are reported.
+export function validateTopics(raw, now = new Date()) {
+  const topics = [];
+  const problems = [];
+  raw.forEach((t, i) => {
+    const label = present(t?.name) ? `"${t.name}"` : `#${i + 1}`;
+    const issues = [];
+    if (t === null || typeof t !== "object") {
+      problems.push(`Topic ${label}: not a mapping, skipped.`);
+      return;
+    }
+    if (!present(t.name)) issues.push("missing name");
+    const startDate = parseDate(t.start);
+    if (!present(t.start)) issues.push("missing start");
+    else if (!startDate) issues.push(`unsupported start ${JSON.stringify(t.start)}`);
+    const endDate = present(t.end) ? parseDate(t.end) : now;
+    if (!endDate) issues.push(`unsupported end ${JSON.stringify(t.end)}`);
+    if (startDate && endDate && endDate < startDate)
+      issues.push("end is before start");
+    if (issues.length) problems.push(`Topic ${label}: ${issues.join(", ")}, skipped.`);
+    else topics.push({ ...t, startDate, endDate });
+  });
+  return { topics, problems };
+}
+
+// Widen a zero-length span to one year so positions never divide by zero.
+export function padSpan(minDate, maxDate) {
+  const yearAfter = new Date(minDate);
+  yearAfter.setFullYear(yearAfter.getFullYear() + 1);
+  return maxDate < yearAfter ? yearAfter : maxDate;
+}

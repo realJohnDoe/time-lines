@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseDate, formatDate, assignLevels, isToday } from "./timeline.js";
+import { parseDate, formatDate, assignLevels, isToday, validateTopics, padSpan } from "./timeline.js";
 
 const ymd = (d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()];
 
@@ -58,4 +58,32 @@ test("assignLevels orders rows top-down and each row chronologically", () => {
     topic("mid", 2005, 2007),
   ]);
   assert.deepEqual(ts.map((t) => t.name), ["early", "mid", "late", "outer"]);
+});
+
+test("validateTopics keeps valid topics and reports the rest", (t) => {
+  t.mock.method(console, "warn", () => {});
+  const now = new Date(2024, 5, 1);
+  const { topics, problems } = validateTopics(
+    [
+      { name: "ok", start: 2000 },
+      { name: "typo", start: "soon", end: 2010 },
+      { name: "badend", start: 2000, end: "later" },
+      { name: "backwards", start: 2010, end: 2000 },
+      { start: 2000, end: 2001 },
+    ],
+    now
+  );
+  assert.deepEqual(topics.map((x) => x.name), ["ok"]);
+  assert.equal(topics[0].endDate, now);
+  assert.equal(problems.length, 4);
+  assert.match(problems[0], /"typo".*unsupported start "soon"/);
+  assert.match(problems[1], /unsupported end "later"/);
+  assert.match(problems[2], /end is before start/);
+  assert.match(problems[3], /#5.*missing name/);
+});
+
+test("padSpan widens a zero span to a year", () => {
+  const d = new Date(2023, 0, 1);
+  assert.deepEqual(ymd(padSpan(d, d)), [2024, 1, 1]);
+  assert.equal(padSpan(d, new Date(2030, 0, 1)).getFullYear(), 2030);
 });

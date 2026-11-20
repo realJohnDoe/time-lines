@@ -1,6 +1,6 @@
 import { load } from "js-yaml";
 import "./style.css";
-import { parseDate, formatDate, assignLevels, isToday } from "./timeline.js";
+import { validateTopics, padSpan, formatDate, assignLevels, isToday } from "./timeline.js";
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
@@ -112,7 +112,7 @@ function renderTimeline(
         return `
 <div class="absolute flex items-center shadow-xs ${color} text-white text-sm py-2 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black z-10"
     tabindex="0" role="group" aria-label="${escapeHtml(tooltip)}"
-    style="left:${x1}px; bottom:${y}px; width:${x2 - x1}px; height:${barHeight - 8}px;"
+    style="left:${x1}px; bottom:${y}px; width:${Math.max(x2 - x1, 4)}px; height:${barHeight - 8}px;"
     title="${escapeHtml(tooltip)}">
     ${cap("left", topic.tags?.includes("fuzzy-start"), color)}
     ${cap("right", topic.tags?.includes("fuzzy-end") || isToday(topic.endDate), color)}
@@ -132,6 +132,8 @@ function renderTimeline(
 }
 
 function render() {
+  const problemList = document.getElementById("topic-problems");
+  problemList.innerHTML = "";
   const yamlText = document.getElementById("yaml-input").value;
   let data;
   try {
@@ -148,14 +150,10 @@ function render() {
     ).innerHTML = `<div class="text-red-600">No topics found in YAML.</div>`;
     return;
   }
-  // Use current date if end is missing
-  const topics = data.topics
-    .map((t) => ({
-      ...t,
-      startDate: parseDate(t.start),
-      endDate: t.end ? parseDate(t.end) : new Date(),
-    }))
-    .filter((t) => t.startDate && t.endDate);
+  const { topics, problems } = validateTopics(data.topics);
+  problemList.innerHTML = problems
+    .map((p) => `<li>${escapeHtml(p)}</li>`)
+    .join("");
   if (!topics.length) {
     document.getElementById(
       "timeline"
@@ -163,7 +161,10 @@ function render() {
     return;
   }
   const minDate = new Date(Math.min(...topics.map((t) => t.startDate)));
-  const maxDate = new Date(Math.max(...topics.map((t) => t.endDate)));
+  const maxDate = padSpan(
+    minDate,
+    new Date(Math.max(...topics.map((t) => t.endDate)))
+  );
   assignLevels(topics);
   const barHeight = 36;
   const barGap = 2;
