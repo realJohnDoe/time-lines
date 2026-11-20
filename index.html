@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <title>YAML Timeline</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script type="module" crossorigin src="./assets/index-D6dSMqES.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-D0wg1rZ5.css">
+    <script type="module" crossorigin src="./assets/index-BtttFa-D.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-po2ifULE.css">
   </head>
   <body class="bg-gray-50 w-screen h-screen flex flex-col">
     <div class="flex flex-col-reverse md:flex-row w-full h-full">
@@ -19,6 +19,11 @@
           rows="6"
           placeholder="Paste your YAML here..."
         ></textarea>
+        <ul
+          id="topic-problems"
+          role="status"
+          class="shrink-0 text-red-600 text-sm max-h-32 overflow-y-auto empty:hidden"
+        ></ul>
         <button
           id="render-btn"
           class="bg-blue-600 text-white px-4 py-2 rounded-sm hover:bg-blue-700 w-full"
