@@ -1,20 +1,24 @@
 name: Build and deploy
 
+# The deploy to gh-pages and the per-PR previews live in the shared workflow;
+# this file only checks and builds the site. See the dispatcher skill in
+# agent-skills (Configuring, Pages).
 on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, reopened, synchronize, labeled, closed]
+    types: [opened, reopened, synchronize, labeled, unlabeled, closed]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  check:
-    # Adding a label other than `preview` must not rebuild; a closed PR needs no check.
+  build:
+    # Adding a label other than `preview` must not rebuild; a closed PR or a
+    # removed label needs no build.
     if: >-
-      github.event.action != 'closed' &&
+      github.event.action != 'closed' && github.event.action != 'unlabeled' &&
       (github.event.action != 'labeled' || github.event.label.name == 'preview')
     runs-on: ubuntu-latest
     steps:
@@ -26,63 +30,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
+      # Vite's base is "./", so the same build runs under pr-preview/pr-<N>/.
       - run: pnpm run build
-      - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/main'
-        with:
-          name: dist
-          path: dist
+      - uses: actions/upload-artifact@v7
+        with: { name: site, path: dist, include-hidden-files: true }
 
-  # Builds every PR; only the deploy step is gated on the `preview` label. The
-  # build uses a relative base, so it runs unchanged under pr-preview/pr-<N>/.
-  # On close it skips the build and just removes the folder. Not a required check.
-  preview:
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      (github.event.action != 'labeled' || github.event.label.name == 'preview')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    concurrency:
-      group: preview-${{ github.event.number }}
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-        if: github.event.action != 'closed'
-      - uses: actions/setup-node@v7
-        if: github.event.action != 'closed'
-        with:
-          node-version: 26
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-        if: github.event.action != 'closed'
-      - run: pnpm run build
-        if: github.event.action != 'closed'
-      - uses: rossjrw/pr-preview-action@873417d2df72380da1f3978378fb58560bcde976 # v1.8.2
-        if: github.event.action == 'closed' || contains(github.event.pull_request.labels.*.name, 'preview')
-        with:
-          source-dir: dist
-
-  deploy:
-    needs: check
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    steps:
-      # github-pages-deploy-action pushes from a git checkout, so it needs one.
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
-      - uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
-        with:
-          folder: dist
-          clean-exclude: pr-preview/
+  pages:
+    needs: build
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    uses: realJohnDoe/agent-skills/.github/workflows/pages.yml@main
+    with: { artifact: site }
+    permissions: { contents: write, pull-requests: write }
