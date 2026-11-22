@@ -2,7 +2,7 @@ name: Build and deploy
 
 # The deploy to gh-pages and the per-PR previews live in the shared workflow;
 # this file only checks and builds the site. See the dispatcher skill in
-# agent-skills (Configuring, Pages).
+# joes-workshop (Configuring, Pages).
 on:
   push:
     branches: [main]
@@ -38,6 +38,6 @@ jobs:
   pages:
     needs: build
     if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
-    uses: realJohnDoe/agent-skills/.github/workflows/pages.yml@main
+    uses: realJohnDoe/joes-workshop/.github/workflows/pages.yml@main
     with: { artifact: site }
     permissions: { contents: write, pull-requests: write }
